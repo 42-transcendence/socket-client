@@ -16,7 +16,7 @@ export default function SocketClient() {
       <Grid xs="auto">
         <header>현재 상태</header>
       </Grid>
-      <Grid sx={{ maxHeight: "100%", overflow: "scroll" }} xs>
+      <Grid sx={{ overflow: "scroll" }} xs>
         <Stack spacing={2}>
           {[...new Array(128)].map((e) => (
             <PacketItem key={e}>Test message</PacketItem>
