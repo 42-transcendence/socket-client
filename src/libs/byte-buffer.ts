@@ -28,6 +28,31 @@ export class ByteBuffer {
   private static readonly textEncoder: TextEncoder = new TextEncoder();
   private static readonly textDecoder: TextDecoder = new TextDecoder();
 
+  private static readonly smartAction: Record<
+    string,
+    (buf: ByteBuffer, value: string) => any
+  > = {
+    ["O"]: (buf, value) => buf.writeOpcode(Number(value)),
+    ["1"]: (buf, value) => buf.write1Signed(Number(value)),
+    ["B"]: (buf, value) => buf.write1(Number(value)),
+    ["2"]: (buf, value) => buf.write2(Number(value)),
+    ["W"]: (buf, value) => buf.write2Unsigned(Number(value)),
+    ["4"]: (buf, value) => buf.write4(Number(value)),
+    ["D"]: (buf, value) => buf.write4Unsigned(Number(value)),
+    ["8"]: (buf, value) => buf.write8(BigInt(value)),
+    ["Q"]: (buf, value) => buf.write8Unsigned(BigInt(value)),
+    ["f"]: (buf, value) => buf.write4Float(Number(value)),
+    ["d"]: (buf, value) => buf.write8Float(Number(value)),
+    ["S"]: (buf, value) => buf.writeString(value),
+    ["T"]: (buf, value) => buf.writeDate(new Date(value)),
+    ["t"]: (buf, value) => buf.writeDate(new Date(Date.now() + Number(value))),
+    ["U"]: (buf, value) => buf.writeUUID(value),
+  };
+  private static readonly smartRegex = new RegExp(
+    `([${Object.keys(ByteBuffer.smartAction).join("|")}]){(.*?)}`,
+    "g"
+  );
+
   accessor: DataView;
   offset: number;
   endian: boolean;
@@ -79,6 +104,18 @@ export class ByteBuffer {
           )
         : new DataView(arrayOrBuffer);
     return new ByteBuffer(accessor, endian);
+  }
+
+  static fromSmartBufferString(smart: string): ByteBuffer {
+    const buffer = ByteBuffer.create();
+    const it = smart.matchAll(ByteBuffer.smartRegex);
+    for (const [, key, value] of it) {
+      const action = ByteBuffer.smartAction[key];
+      if (action !== undefined) {
+        action(buffer, value);
+      }
+    }
+    return buffer;
   }
 
   seek(offset: number): void {
