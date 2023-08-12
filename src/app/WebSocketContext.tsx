@@ -1,7 +1,7 @@
 "use client";
 
 import { ByteBuffer } from "@/libs/byte-buffer";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 interface OpcodeEventMap {
   message: MessageEvent<ArrayBuffer>;
@@ -83,14 +83,18 @@ class WebSocketEntry {
   sendPacket(buffer: ByteBuffer): void {
     this.socket.send(buffer.toArray());
   }
+
+  close(code?: number, reason?: string): void {
+    this.socket.close(code, reason);
+  }
 }
 
 const webSocketRegistry = new Map<string, WebSocketEntry>();
 
 function computeWebSocketIfAbsent(
   name: string,
-  url: string,
-  onOpen: (evt: Event) => ByteBuffer | undefined
+  url: string | URL,
+  onOpen?: ((evt: Event) => ByteBuffer | undefined) | undefined
 ): WebSocketEntry {
   const prevEntry: WebSocketEntry | undefined = webSocketRegistry.get(name);
   if (prevEntry !== undefined) {
@@ -101,6 +105,10 @@ function computeWebSocketIfAbsent(
   const entry = new WebSocketEntry(socket);
 
   socket.addEventListener("open", (e) => {
+    if (onOpen === undefined) {
+      return;
+    }
+
     const buffer: ByteBuffer | undefined = onOpen(e);
     if (buffer !== undefined) {
       entry.sendPacket(buffer);
@@ -110,52 +118,41 @@ function computeWebSocketIfAbsent(
   socket.binaryType = "arraybuffer";
 
   socket.addEventListener("message", (e) => {
-    const arraybuffer = e.data as ArrayBuffer;
-    const buffer = ByteBuffer.from(arraybuffer);
+    const buffer = ByteBuffer.from(e.data);
     const opcode: number = buffer.readOpcode();
-    entry.dispatchOpcode(opcode, new MessageEvent<ArrayBuffer>(arraybuffer));
+    entry.dispatchOpcode(opcode, e);
   });
 
   webSocketRegistry.set(name, entry);
   return entry;
 }
 
-const WebSocketContext = createContext<WebSocket | undefined>(undefined);
+const WebSocketContext = createContext<WebSocketEntry | undefined>(undefined);
 
 export function WebSocketProvider({
   children,
   name,
   url,
+  onOpen,
 }: React.PropsWithChildren<{
   name: string;
   url: string | URL;
+  onOpen?: ((evt: Event) => ByteBuffer | undefined) | undefined;
 }>) {
-  const [webSocket, setWebSocket] = useState<WebSocket | undefined>(undefined);
+  const socket = useRef<WebSocketEntry | undefined>(undefined);
   useEffect(() => {
-    const socket = new WebSocket(url);
-    socket.binaryType = "arraybuffer";
-
-    socket.addEventListener("open", function (event) {
-      console.log("open", event);
-      const buf = ByteBuffer.createWithOpcode(42);
-      this.send(buf.toArray());
-    });
-
-    socket.addEventListener("message", function (event) {
-      console.log("message 1", ByteBuffer.from(event.data));
-    });
-    socket.addEventListener("message", function (event) {
-      console.log("message 2", ByteBuffer.from(event.data));
-    });
-  }, [name, url]);
+    const newSocket = computeWebSocketIfAbsent(name, url, onOpen);
+    socket.current = newSocket;
+  }, [name, url, onOpen]);
   return (
-    <WebSocketContext.Provider value={webSocket}>
+    <WebSocketContext.Provider value={socket.current}>
       {children}
     </WebSocketContext.Provider>
   );
 }
 
 export function useWebSocket(name: string) {
-  const ctx: WebSocket | undefined = useContext(WebSocketContext);
+  const [, rerender] = useState();
+  const ctx: WebSocketEntry | undefined = useContext(WebSocketContext);
   return ctx;
 }
