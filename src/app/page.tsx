@@ -5,12 +5,14 @@ import { PacketContextProvider, PacketItemList } from "./PacketContext";
 import { DefaultWebSocketContainer } from "./DefaultWebSocketContainer";
 import { WebSocketRegistry } from "./WebSocketRegistry";
 import { WebSocketRegistryContainer } from "./WebSocketContainer";
+import { RecvText } from "./RecvText";
 
 export default function SocketClient() {
   return (
     <PacketContextProvider>
       <WebSocketRegistryContainer>
         <DefaultWebSocketContainer name="chat" url="wss://back.stri.dev/chat">
+          <RecvText />
           <Grid
             sx={{ height: "100%" }}
             container

@@ -4,7 +4,7 @@ import { createContext } from "react";
 import { ByteBuffer } from "@/libs/byte-buffer";
 import { WebSocketEntry } from "./WebSocketEntry";
 
-export type WebSocketRegisterOptions = {
+export type WebSocketRegisterProps = {
   name: string;
   url: string | URL;
   protocols?: string | string[] | undefined;
@@ -13,39 +13,32 @@ export type WebSocketRegisterOptions = {
 };
 
 export class WebSocketRegistry {
-  static readonly Default = new WebSocketRegistry();
-  static readonly Context = createContext<WebSocketRegistry>(
-    WebSocketRegistry.Default
-  );
+  static readonly DEFAULT = new WebSocketRegistry();
 
-  readonly registry = new Map<string, WebSocketEntry>();
+  static readonly Context = createContext<WebSocketRegistry>(this.DEFAULT);
 
-  get(name: string): WebSocketEntry {
-    const entry: WebSocketEntry | undefined = this.registry.get(name);
-    if (entry === undefined) {
-      throw new SyntaxError();
-    }
+  private readonly registry = new Map<string, WebSocketEntry>();
 
-    return entry;
+  get(name: string): WebSocketEntry | undefined {
+    return this.registry.get(name);
   }
 
-  computeWebSocketIfAbsent(options: WebSocketRegisterOptions): WebSocketEntry {
-    const prevEntry: WebSocketEntry | undefined = this.registry.get(
-      options.name
-    );
+  computeWebSocketIfAbsent(props: WebSocketRegisterProps): WebSocketEntry {
+    const prevEntry: WebSocketEntry | undefined = this.registry.get(props.name);
     if (prevEntry !== undefined) {
       return prevEntry;
     }
 
-    const socket = new WebSocket(options.url, options.protocols);
+    const socket = new WebSocket(props.url, props.protocols);
     const entry = new WebSocketEntry(socket);
 
     socket.addEventListener("open", (e) => {
-      if (options.onOpen === undefined) {
+      console.log("wow");
+      if (props.onOpen === undefined) {
         return;
       }
 
-      const buffer: ByteBuffer | undefined = options.onOpen(e);
+      const buffer: ByteBuffer | undefined = props.onOpen(e);
       if (buffer !== undefined) {
         entry.sendPacket(buffer);
       }
@@ -60,11 +53,14 @@ export class WebSocketRegistry {
     });
 
     socket.addEventListener("close", (e) => {
-      e.code;
-      e.reason;
+      if (props.onClose === undefined) {
+        return;
+      }
+
+      props.onClose(e);
     });
 
-    this.registry.set(options.name, entry);
+    this.registry.set(props.name, entry);
     return entry;
   }
 }
