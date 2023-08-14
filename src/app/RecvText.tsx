@@ -1,9 +1,9 @@
 "use client";
 
-import { useWebSocketOpcode } from "./WebSocketContainer";
+import { useWebSocket } from "@/websocket/websocket-hook";
 
 export function RecvText() {
-  const [lastPacket] = useWebSocketOpcode("chat", 0);
+  const { lastPacket } = useWebSocket("chat", 0);
 
   if (lastPacket === undefined) {
     return <p>undefined</p>;

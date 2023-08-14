@@ -1,7 +1,5 @@
-"use client";
-
 import { ByteBuffer } from "@/libs/byte-buffer";
-import { WebSocketContainer } from "./WebSocketContainer";
+import { WebSocketContainer } from "@/websocket/websocket-hook";
 
 function defaultOnWebSocketOpen(event: Event): ByteBuffer {
   void event;
@@ -18,16 +16,13 @@ export function DefaultWebSocketContainer({
   children,
   name,
   url,
-}: React.PropsWithChildren<{
-  name: string;
-  url: string;
-}>) {
+}: React.PropsWithChildren<{ name: string; url: string }>) {
   return (
     <WebSocketContainer
       name={name}
       url={url}
-      onOpen={(e) => defaultOnWebSocketOpen(e)}
-      onClose={(e) => defaultOnWebSocketClose(e)}
+      onOpen={defaultOnWebSocketOpen}
+      onClose={defaultOnWebSocketClose}
     >
       {children}
     </WebSocketContainer>
