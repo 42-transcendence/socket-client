@@ -1,15 +1,21 @@
+"use client";
+
 import { ByteBuffer } from "@/libs/byte-buffer";
 import { WebSocketContainer } from "@/websocket/websocket-hook";
 
-function defaultOnWebSocketOpen(event: Event): ByteBuffer {
+function defaultOnWebSocketOpen(event: Event): Uint8Array {
   void event;
   const buffer = ByteBuffer.createWithOpcode(0);
-  return buffer;
+  return buffer.toArray();
 }
 
 function defaultOnWebSocketClose(event: CloseEvent): void {
   void event;
   console.log("closed", event.code, event.reason);
+}
+
+function defaultOnError(event: Event): void {
+  console.log("이거 왜 터짐?", event);
 }
 
 export function DefaultWebSocketContainer({
@@ -21,8 +27,9 @@ export function DefaultWebSocketContainer({
     <WebSocketContainer
       name={name}
       url={url}
-      onOpen={defaultOnWebSocketOpen}
+      handshake={defaultOnWebSocketOpen}
       onClose={defaultOnWebSocketClose}
+      onError={defaultOnError}
     >
       {children}
     </WebSocketContainer>

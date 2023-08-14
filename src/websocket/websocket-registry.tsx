@@ -2,6 +2,9 @@ export type WebSocketRegisterProps = {
   name: string;
   url: string | URL;
   protocols?: string | string[] | undefined;
+  handshake?:
+    | ((evt: Event) => ArrayBufferLike | ArrayBufferView | undefined)
+    | undefined;
   onClose?: ((evt: CloseEvent) => void) | undefined;
   onError?: ((evt: Event) => void) | undefined;
   onMessage?: ((evt: MessageEvent) => void) | undefined;
@@ -11,8 +14,8 @@ export type WebSocketRegisterProps = {
 export enum SocketState {
   INITIAL,
   OPEN,
-  RECONNECTING,
   CLOSED,
+  RECONNECTING,
 }
 
 export type SocketCloseResult = {
@@ -91,6 +94,14 @@ export class WebSocketRegistry {
     });
 
     value.addEventListener("open", (ev) => {
+      if (props.handshake !== undefined) {
+        const data: ArrayBufferLike | ArrayBufferView | undefined =
+          props.handshake(ev);
+        if (data !== undefined) {
+          value.send(data);
+        }
+      }
+
       for (const listener of listeners) {
         listener.webSocketRef.current = value;
         listener.setSocketState(SocketState.OPEN);

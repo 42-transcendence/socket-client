@@ -1,22 +1,41 @@
 "use client";
 
+import { ByteBuffer } from "@/libs/byte-buffer";
 import { useWebSocket } from "@/websocket/websocket-hook";
 
 export function RecvText() {
-  const { lastPacket } = useWebSocket("chat", 0);
+  const { lastPayload, sendPayload } = useWebSocket(
+    "game",
+    0,
+    (opcode, payload) => {
+      const date: Date = payload.readDate();
+      const loop = payload.read4();
+      const array = new Array<string>();
+      for (let i = 0; i < loop; i++) {
+        array.push(payload.readString());
+      }
+      console.log("Effect: ", opcode, date, loop, array);
 
-  if (lastPacket === undefined) {
+      const buffer = ByteBuffer.createWithOpcode(42);
+      buffer.writeString("안녕");
+      return buffer;
+    }
+  );
+
+  if (lastPayload === undefined) {
     return <p>undefined</p>;
   } else {
-    lastPacket.readDate();
-    const loop = lastPacket.read4();
+    const date: Date = lastPayload.readDate();
+    const loop = lastPayload.read4();
     const array = new Array<string>();
     for (let i = 0; i < loop; i++) {
-      array.push(lastPacket.readString());
+      array.push(lastPayload.readString());
     }
     return (
       <>
         <p>Message</p>
+        <p>Date = {date.toString()}</p>
+        <p>Number = {loop}</p>
         {array.map((e, i) => (
           <p key={i}>{e}</p>
         ))}

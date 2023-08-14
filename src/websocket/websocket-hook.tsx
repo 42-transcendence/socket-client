@@ -45,40 +45,28 @@ export function WebSocketContainer({
   return children;
 }
 
-type WebSocketListenerHooks = {
+export function useWebSocket(
+  name: string,
+  opcode?: number | undefined,
+  once?: (
+    opcode: number,
+    buffer: ByteBuffer
+  ) => ByteBuffer | ByteBuffer[] | undefined | void
+): {
   dangerouslyGetWebSocketRef: React.MutableRefObject<WebSocket | undefined>;
   socketState: SocketState;
   socketCloseResult: SocketCloseResult | undefined;
   lastOpcode: number | undefined;
-  lastPacket: ByteBuffer | undefined;
-  sendPacket: (value: ByteBuffer) => void;
-};
-
-export function useWebSocket(
-  name: string,
-  opcode?: number | undefined
-): WebSocketListenerHooks {
+  lastPayload: ByteBuffer | undefined;
+  sendPayload: (value: ByteBuffer) => void;
+} {
   const registry: WebSocketRegistry = useContext(RegistryContext);
   const webSocketRef = useRef<WebSocket>();
   const [socketState, setSocketState] = useState(SocketState.INITIAL);
   const [socketCloseResult, setSocketCloseResult] =
     useState<SocketCloseResult>();
   const [lastMessage, _setLastMessage] = useState<ArrayBuffer>();
-  const lastPacket = useMemo<ByteBuffer | undefined>(() => {
-    if (lastMessage === undefined) {
-      return undefined;
-    }
-
-    return ByteBuffer.from(lastMessage);
-  }, [lastMessage]);
-  const lastOpcode = useMemo<number | undefined>(() => {
-    if (lastPacket === undefined) {
-      return undefined;
-    }
-
-    return lastPacket.readOpcode();
-  }, [lastPacket]);
-  const sendPacket = useCallback((value: ByteBuffer): void => {
+  const sendPayload = useCallback((value: ByteBuffer): void => {
     webSocketRef.current?.send(value.toArray());
   }, []);
   useEffect(() => {
@@ -92,9 +80,9 @@ export function useWebSocket(
     const filter =
       opcode !== undefined
         ? (value: ArrayBuffer): boolean => {
-            const buffer = ByteBuffer.from(value);
-            const opcode = buffer.readOpcode();
-            return opcode === opcode;
+            const filterPayload = ByteBuffer.from(value);
+            const filterOpcode = filterPayload.readOpcode();
+            return filterOpcode === opcode;
           }
         : undefined;
     const props: WebSocketListenProps = {
@@ -107,15 +95,35 @@ export function useWebSocket(
     };
     return registry.listen(props);
   }, [registry, name, opcode]);
+  useEffect(() => {
+    if (lastMessage === undefined || once === undefined) {
+      return;
+    }
 
-  const hooks: WebSocketListenerHooks = {
+    const payload = ByteBuffer.from(lastMessage);
+    const opcode = payload.readOpcode();
+    const response = once(opcode, payload);
+    if (response !== undefined) {
+      if (Array.isArray(response)) {
+        for (const buffer of response) {
+          webSocketRef.current?.send(buffer.toArray());
+        }
+      } else {
+        webSocketRef.current?.send(response.toArray());
+      }
+    }
+  }, [lastMessage, once]);
+
+  const lastPayload =
+    lastMessage !== undefined ? ByteBuffer.from(lastMessage) : undefined;
+  const lastOpcode = lastPayload?.readOpcode();
+
+  return {
     dangerouslyGetWebSocketRef: webSocketRef,
     socketState,
     socketCloseResult,
     lastOpcode,
-    lastPacket,
-    sendPacket,
+    lastPayload,
+    sendPayload,
   };
-
-  return hooks;
 }

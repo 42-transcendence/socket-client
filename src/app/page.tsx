@@ -2,16 +2,15 @@ import { Stack, Typography } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import { PacketInputForm } from "./PacketInputForm";
 import { PacketContextProvider, PacketItemList } from "./PacketContext";
-import { DefaultWebSocketContainer } from "./DefaultWebSocketContainer";
-import { WebSocketRegistry } from "./WebSocketRegistry";
-import { WebSocketRegistryContainer } from "./WebSocketContainer";
 import { RecvText } from "./RecvText";
+import { WebSocketRegistryContainer } from "@/websocket/websocket-hook";
+import { DefaultWebSocketContainer } from "./DefaultWebSocketContainer";
 
 export default function SocketClient() {
   return (
     <PacketContextProvider>
       <WebSocketRegistryContainer>
-        <DefaultWebSocketContainer name="chat" url="wss://back.stri.dev/chat">
+        <DefaultWebSocketContainer name="game" url="wss://back.stri.dev/game">
           <RecvText />
           <Grid
             sx={{ height: "100%" }}
