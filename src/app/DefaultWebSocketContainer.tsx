@@ -21,12 +21,16 @@ function defaultOnError(event: Event): void {
 export function DefaultWebSocketContainer({
   children,
   name,
-  url,
-}: React.PropsWithChildren<{ name: string; url: string }>) {
+  urlBase,
+  token,
+}: React.PropsWithChildren<{ name: string; urlBase: string; token: string }>) {
+  const url = new URL(urlBase);
+  url.searchParams.set("token", token);
   return (
     <WebSocketContainer
       name={name}
       url={url}
+      protocols={["1", "2", "3"]}
       handshake={defaultOnWebSocketOpen}
       onClose={defaultOnWebSocketClose}
       onError={defaultOnError}

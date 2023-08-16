@@ -5,12 +5,18 @@ import { PacketContextProvider, PacketItemList } from "./PacketContext";
 import { RecvText } from "./RecvText";
 import { WebSocketRegistryContainer } from "@/websocket/websocket-hook";
 import { DefaultWebSocketContainer } from "./DefaultWebSocketContainer";
+import { cookies } from "next/headers";
 
 export default function SocketClient() {
+  const token = cookies().get("access_token")?.value ?? "";
   return (
     <PacketContextProvider>
       <WebSocketRegistryContainer>
-        <DefaultWebSocketContainer name="game" url="wss://back.stri.dev/game">
+        <DefaultWebSocketContainer
+          name="game"
+          urlBase="wss://back.stri.dev/game"
+          token={token}
+        >
           <RecvText />
           <Grid
             sx={{ height: "100%" }}
