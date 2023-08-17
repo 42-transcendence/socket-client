@@ -1,6 +1,6 @@
 "use client";
 
-import { ByteBuffer } from "@/libs/byte-buffer";
+import { ByteBuffer } from "@/library/byte-buffer";
 import { Button, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { useState } from "react";

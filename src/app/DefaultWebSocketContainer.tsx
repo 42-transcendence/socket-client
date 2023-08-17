@@ -1,6 +1,6 @@
 "use client";
 
-import { ByteBuffer } from "@/libs/byte-buffer";
+import { ByteBuffer } from "@/library/byte-buffer";
 import { WebSocketContainer } from "@/websocket/websocket-hook";
 
 function defaultOnWebSocketOpen(event: Event): Uint8Array {

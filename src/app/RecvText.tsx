@@ -1,6 +1,6 @@
 "use client";
 
-import { ByteBuffer } from "@/libs/byte-buffer";
+import { ByteBuffer } from "@/library/byte-buffer";
 import { useWebSocket } from "@/websocket/websocket-hook";
 
 export function RecvText() {
