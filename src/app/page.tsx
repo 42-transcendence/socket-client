@@ -8,13 +8,13 @@ import { DefaultWebSocketContainer } from "./DefaultWebSocketContainer";
 import { cookies } from "next/headers";
 
 export default function SocketClient() {
-  const token = cookies().get("access_token")?.value ?? "";
+  const token = cookies().get("at")?.value ?? "";
   return (
     <PacketContextProvider>
       <WebSocketRegistryContainer>
         <DefaultWebSocketContainer
-          name="game"
-          urlBase="wss://back.stri.dev/game"
+          name="sock"
+          urlBase="wss://back.stri.dev/chat"
           token={token}
         >
           <RecvText />

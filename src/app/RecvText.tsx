@@ -5,7 +5,7 @@ import { useWebSocket } from "@/websocket/websocket-hook";
 
 export function RecvText() {
   const { lastPayload, sendPayload } = useWebSocket(
-    "game",
+    "sock",
     0,
     (opcode, payload) => {
       const date: Date = payload.readDate();
@@ -21,6 +21,9 @@ export function RecvText() {
       return buffer;
     }
   );
+  useWebSocket("sock", 21, (_, payload) => {
+    console.log("UUID: " + payload.readUUID());
+  });
 
   if (lastPayload === undefined) {
     return <p>undefined</p>;

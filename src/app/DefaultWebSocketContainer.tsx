@@ -30,7 +30,6 @@ export function DefaultWebSocketContainer({
     <WebSocketContainer
       name={name}
       url={url}
-      protocols={["1", "2", "3"]}
       handshake={defaultOnWebSocketOpen}
       onClose={defaultOnWebSocketClose}
       onError={defaultOnError}
